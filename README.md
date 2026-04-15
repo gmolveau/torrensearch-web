@@ -7,7 +7,6 @@ A simple web UI for `torrensearch`. Search torrents from a browser, click a resu
 ## Prerequisites
 
 - Python 3.13+ with [uv](https://docs.astral.sh/uv/)
-- The [`torrensearch`](https://github.com/gmolveau/torrensearch) core library
 
 ---
 
@@ -19,7 +18,7 @@ TORRENSEARCH_WEB_USER=admin TORRENSEARCH_WEB_PASSWORD=secret uv run torrensearch
 
 Then open [http://127.0.0.1:8000](http://127.0.0.1:8000) in your browser. You will be prompted for the username and password you set above.
 
-If `TORRENSEARCH_WEB_PASSWORD` is not set, the app starts without authentication and prints a warning to stderr.
+If `TORRENSEARCH_WEB_PASSWORD` is not set, the app does not start.
 
 ---
 
@@ -69,7 +68,7 @@ Click any row to expand a panel with the full magnet link. From there you can:
 
 ## 4. Jackett integration
 
-To search private or additional public trackers, configure the Jackett engine. See the [Jackett section in the core README](https://github.com/gmolveau/torrensearch/README.md#jackett) for full setup instructions.
+To search private or additional public trackers, configure the Jackett engine. See the [Jackett section in the torrensearch README](https://github.com/gmolveau/torrensearch/README.md#jackett) for full setup instructions.
 
 A config file for the jacket engine can be provided to the container in the `/config` volume.
 
