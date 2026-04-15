@@ -1,5 +1,7 @@
 # torrensearch-web
 
+[![Docker image](https://img.shields.io/badge/ghcr.io-torrensearch--web-blue?logo=docker&logoColor=white)](https://github.com/gmolveau/torrensearch-web/pkgs/container/torrensearch-web)
+
 > **Disclaimer:** This project is for educational purposes only. Use it only to search for content you have the legal right to access. The authors are not responsible for any misuse.
 
 A simple web UI for `torrensearch`. Search torrents from a browser, click a result to reveal its magnet link, and copy it with one click. Protected by HTTP Basic Auth.

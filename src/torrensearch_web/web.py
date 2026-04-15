@@ -14,7 +14,7 @@ import os
 import sys
 from typing import Any
 
-from flask import Flask, Response, render_template_string, request
+from flask import Flask, Response, render_template, request
 from flask_caching import Cache
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -54,146 +54,6 @@ def _require_auth(f):  # type: ignore[no-untyped-def]
 
     return wrapper
 
-
-_HTML = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>torrensearch</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: ui-monospace, monospace; background: #0f1117; color: #e2e8f0; min-height: 100vh; padding: 2rem 1rem; }
-  a { color: inherit; text-decoration: none; }
-
-  header { max-width: 900px; margin: 0 auto 2rem; display: flex; align-items: baseline; gap: 1rem; }
-  header h1 { font-size: 1.4rem; color: #7dd3fc; letter-spacing: .05em; }
-  header span { font-size: .8rem; color: #64748b; }
-
-  form { max-width: 900px; margin: 0 auto 2rem; display: flex; flex-wrap: wrap; gap: .5rem; }
-  input, select { background: #1e2433; border: 1px solid #334155; color: #e2e8f0; border-radius: 6px; padding: .45rem .75rem; font: inherit; font-size: .9rem; }
-  input[name=q] { flex: 1 1 260px; }
-  button { background: #0ea5e9; border: none; color: #fff; border-radius: 6px; padding: .45rem 1.25rem; font: inherit; font-size: .9rem; cursor: pointer; }
-  button:hover { background: #38bdf8; }
-
-  .meta { max-width: 900px; margin: 0 auto 1rem; font-size: .8rem; color: #64748b; }
-
-  table { width: 100%; max-width: 900px; margin: 0 auto; border-collapse: collapse; font-size: .85rem; }
-  th { text-align: left; padding: .4rem .6rem; color: #7dd3fc; border-bottom: 1px solid #334155; white-space: nowrap; }
-  td { padding: .45rem .6rem; border-bottom: 1px solid #1e2433; vertical-align: top; }
-  tr:hover td { background: #1e2433; cursor: pointer; }
-  .seeds-high { color: #4ade80; font-weight: 600; }
-  .seeds-mid  { color: #facc15; }
-  .seeds-low  { color: #f87171; }
-  .seeds-none { color: #475569; }
-
-  /* magnet panel */
-  .magnet-row td { background: #1a2236 !important; padding: .6rem 1rem; }
-  .magnet-box { display: flex; gap: .5rem; align-items: flex-start; flex-wrap: wrap; }
-  .magnet-link { flex: 1; word-break: break-all; font-size: .78rem; color: #94a3b8; }
-  .copy-btn { background: #334155; border: none; color: #e2e8f0; border-radius: 4px; padding: .25rem .6rem; font: inherit; font-size: .78rem; cursor: pointer; white-space: nowrap; }
-  .copy-btn:hover { background: #475569; }
-  .copied { color: #4ade80 !important; }
-
-  .errors { max-width: 900px; margin: 0 auto 1rem; }
-  .error  { color: #f87171; font-size: .8rem; margin-bottom: .25rem; }
-  .empty  { max-width: 900px; margin: 2rem auto; text-align: center; color: #475569; }
-</style>
-</head>
-<body>
-
-<header>
-  <h1>torrensearch</h1>
-  <span>torrent search</span>
-</header>
-
-<form method="get" action="/">
-  <input name="q" type="text" placeholder="search query…" value="{{ q }}" autofocus required>
-  <select name="cat">
-    {% for c in categories %}
-    <option value="{{ c }}" {% if c == cat %}selected{% endif %}>{{ c }}</option>
-    {% endfor %}
-  </select>
-  <input name="engines" type="text" placeholder="engines (default: all)" value="{{ engines_raw }}" style="flex:0 1 200px">
-  <input name="limit" type="number" min="5" max="100" value="{{ limit }}" style="flex:0 1 70px" title="max results">
-  <button type="submit">Search</button>
-</form>
-
-{% if errors %}
-<div class="errors">
-  {% for e in errors %}<div class="error">⚠ {{ e }}</div>{% endfor %}
-</div>
-{% endif %}
-
-{% if results is not none %}
-  {% if results %}
-  <div class="meta">{{ results|length }} result(s) for "{{ q }}"</div>
-  <table>
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th>Size</th>
-        <th>Seeds</th>
-        <th>Leech</th>
-        <th>Engine</th>
-      </tr>
-    </thead>
-    <tbody>
-    {% for r in results %}
-      <tr class="result-row" data-idx="{{ loop.index }}">
-        <td>{{ loop.index }}</td>
-        <td>{{ r.name }}</td>
-        <td>{{ r.size_fmt }}</td>
-        <td class="{{ r.seed_class }}">{{ r.seeds_fmt }}</td>
-        <td>{{ r.leech_fmt }}</td>
-        <td>{{ r._engine }}</td>
-      </tr>
-      <tr class="magnet-row" id="magnet-{{ loop.index }}" style="display:none">
-        <td colspan="6">
-          <div class="magnet-box">
-            <span class="magnet-link">{{ r.link }}</span>
-            <button class="copy-btn" data-link="{{ r.link }}">Copy</button>
-            {% if r.desc_link and r.desc_link != '-1' %}
-            <a href="{{ r.desc_link }}" target="_blank" rel="noopener">
-              <button class="copy-btn" type="button">Info page ↗</button>
-            </a>
-            {% endif %}
-          </div>
-        </td>
-      </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-  {% else %}
-  <div class="empty">No results found for "{{ q }}".</div>
-  {% endif %}
-{% endif %}
-
-<script>
-document.querySelectorAll('.result-row').forEach(row => {
-  row.addEventListener('click', () => {
-    const panel = document.getElementById('magnet-' + row.dataset.idx);
-    const visible = panel.style.display !== 'none';
-    document.querySelectorAll('.magnet-row').forEach(r => r.style.display = 'none');
-    if (!visible) panel.style.display = 'table-row';
-  });
-});
-
-document.querySelectorAll('.copy-btn[data-link]').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(btn.dataset.link).then(() => {
-      btn.textContent = 'Copied!';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
-    });
-  });
-});
-</script>
-</body>
-</html>
-"""
 
 
 def _fmt_size(raw: Any) -> str:
@@ -265,8 +125,8 @@ def index() -> str:
             r.setdefault("desc_link", "")
             results.append(r)
 
-    return render_template_string(
-        _HTML,
+    return render_template(
+        "index.html",
         q=q,
         cat=cat,
         categories=sorted(CATEGORIES),
