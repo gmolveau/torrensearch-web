@@ -1,2 +1,2 @@
 def hello() -> str:
-    return "Hello from torrent-search-web!"
+    return "Hello, world!"
