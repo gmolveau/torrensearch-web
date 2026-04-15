@@ -1,12 +1,14 @@
 [project]
 name = "torrensearch-web"
-version = "1.0.0"
+version = "2.0.0"
 requires-python = ">=3.13"
 dependencies = [
-    "flask>=3.1.3",
-    "flask-caching>=2.3.1",
-    "flask-limiter>=4.1.1",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "slowapi>=0.1.9",
+    "jinja2>=3.1.0",
     "torrensearch>=1.0.0",
+    "fastapi-cache2>=0.2.0",
 ]
 
 [project.scripts]
@@ -18,3 +20,22 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/torrensearch_web"]
+
+[tool.ruff]
+lint.select = [
+    "E",    # pycodestyle error
+    "F",    # pyflake
+    "I",    # isort imports
+    "SIM",  # Simplify code
+    "C4",   # Better list/set/dict comprehensions
+    "ERA",  # Removes commented-out code from Python files.
+    "FAST", # FAST API related
+    "A",    # Check for python builtins being used as variables or parameters.
+    "DTZ",  #  Ban the usage of unsafe naive datetime class
+    "T10",  # Check for pdb;idbp imports and set traces
+    "SLF",  # Private members accessed
+    "RET",  # Checks return values
+]
+
+[dependency-groups]
+dev = ["ruff>=0.15.10"]
